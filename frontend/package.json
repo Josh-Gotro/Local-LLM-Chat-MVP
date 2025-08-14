@@ -1,0 +1,17 @@
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run vite\"",
+    "server": "cd ../backend && uvicorn app:app --reload",
+    "vite": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0",
+    "vite": "^7.1.2"
+  }
+}
