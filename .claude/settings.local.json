@@ -15,7 +15,8 @@
       "Bash(taskkill:*)",
       "Bash(find:*)",
       "Bash(npm run vite:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(/dev/null)"
     ],
     "deny": []
   }

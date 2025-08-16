@@ -69,6 +69,79 @@ const EmptyState = styled.div`
   }
 `
 
+const ConversationInfo = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(187, 134, 252, 0.3);
+  border-radius: 12px 12px 0 0;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  margin-bottom: 0;
+
+  @media (max-width: 768px) {
+    padding: 0.5rem;
+    border-radius: 8px 8px 0 0;
+  }
+
+  @media (min-width: 1025px) {
+    padding: 1rem;
+  }
+
+  @media (prefers-color-scheme: light) {
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(8px);
+    border-color: rgba(187, 134, 252, 0.3);
+  }
+`
+
+const ContextIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+`
+
+const ContextBar = styled.div`
+  width: 80px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+`
+
+const ContextFill = styled.div`
+  height: 100%;
+  background: ${props => {
+    if (props.$percentage >= 90) return 'linear-gradient(90deg, #ff6b6b, #ee5a24)';
+    if (props.$percentage >= 70) return 'linear-gradient(90deg, #ffa726, #ff7043)';
+    return 'linear-gradient(90deg, #4ecdc4, #45b7aa)';
+  }};
+  width: ${props => props.$percentage}%;
+  transition: all 0.3s ease;
+  border-radius: 3px;
+`
+
+const ClearButton = styled.button`
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+  }
+`
+
 function MessageList({ messages, isLoading, thinkingContent }) {
   const messagesEndRef = useRef(null)
 
@@ -80,17 +153,17 @@ function MessageList({ messages, isLoading, thinkingContent }) {
     scrollToBottom()
   }, [messages, isLoading, thinkingContent])
 
+  const conversationMessages = messages.filter(msg => msg.role !== 'search')
+
   return (
     <Container>
       {messages.length === 0 ? (
         <EmptyState>
-          <p>Start a conversation with your local LLM!</p>
-          <p style={{ fontSize: '0.8em', marginTop: '0.5rem', opacity: 0.7 }}>
-            Tip: Use "/search your query" to search the web
-          </p>
+          <p>Ready when you are...</p>
         </EmptyState>
       ) : (
-        messages.map((message) => {
+        <>
+          {messages.map((message) => {
           if (message.role === 'search') {
             const searchData = JSON.parse(message.content)
             return (
@@ -109,10 +182,11 @@ function MessageList({ messages, isLoading, thinkingContent }) {
               content={message.content} 
             />
           )
-        })
+          })}
+          {isLoading && <ThinkingBubble thinkingContent={thinkingContent} />}
+          <div ref={messagesEndRef} />
+        </>
       )}
-      {isLoading && <ThinkingBubble thinkingContent={thinkingContent} />}
-      <div ref={messagesEndRef} />
     </Container>
   )
 }

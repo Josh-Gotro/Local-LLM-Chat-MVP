@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import MessageList from './MessageList'
 import MessageInput from './MessageInput'
@@ -26,9 +26,152 @@ function ChatContainer() {
   const [isLoading, setIsLoading] = useState(false)
   const [thinkingContent, setThinkingContent] = useState('')
   const [showThinking, setShowThinking] = useState(false)
+  const [conversationSummary, setConversationSummary] = useState('')
+  const [isSummarizing, setIsSummarizing] = useState(false)
+  const [forceContextUpdate, setForceContextUpdate] = useState(0)
 
   const addMessage = (role, content) => {
     setMessages(prev => [...prev, { role, content, id: Date.now() }])
+  }
+
+  const clearConversation = () => {
+    setMessages([])
+    setThinkingContent('')
+    setShowThinking(false)
+    setIsLoading(false)
+    setConversationSummary('')
+    console.log('[DEBUG] Conversation cleared')
+  }
+
+  const summarizeConversation = async (messagesToSummarize) => {
+    try {
+      setIsSummarizing(true)
+      console.log('[DEBUG] Starting conversation summarization...')
+      
+      const response = await fetch('/api/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'qwen3:latest',
+          messages: messagesToSummarize
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Summarization failed: ${response.status}`)
+      }
+
+      const result = await response.json()
+      console.log('[DEBUG] Conversation summarized successfully')
+      return result.summary
+    } catch (error) {
+      console.error('[DEBUG] Summarization error:', error)
+      // Fallback: create a simple summary
+      return "Previous conversation context has been preserved."
+    } finally {
+      setIsSummarizing(false)
+    }
+  }
+
+  const buildConversationHistory = async () => {
+    // Convert UI messages to LLM format, filtering out search results
+    const conversationMessages = messages
+      .filter(msg => msg.role !== 'search') // Exclude search result messages
+      .map(msg => ({
+        role: msg.role === 'error' ? 'assistant' : msg.role, // Convert errors to assistant messages
+        content: msg.role === 'user' && msg.content.startsWith('🔍 ') 
+          ? msg.content.substring(2) // Remove search icon from user messages
+          : msg.content
+      }))
+    
+    // More conservative context management focused on recent conversation
+    const MAX_RECENT_MESSAGES = 8
+    const MAX_TOKENS = 4000
+    
+    // Rough token estimation (very approximate: 1 token ≈ 4 characters)
+    const estimateTokens = (text) => Math.ceil(text.length / 4)
+    const summaryTokens = conversationSummary ? estimateTokens(conversationSummary) : 0
+    
+    // FIXED: Check total context size first, not just recent messages
+    const allMessageTokens = conversationMessages.reduce((total, msg) => 
+      total + estimateTokens(msg.content), 0)
+    const totalContextTokens = allMessageTokens + summaryTokens
+    
+    console.log(`[DEBUG] Conversation: ${conversationMessages.length} total messages`)
+    console.log(`[DEBUG] Tokens: ${allMessageTokens} all messages + ${summaryTokens} summary = ${totalContextTokens}/${MAX_TOKENS}`)
+    
+    // Check if we need condensation based on TOTAL context, not just recent
+    const needsCondensation = totalContextTokens >= MAX_TOKENS
+    
+    console.log(`[DEBUG] Tokens: ${totalContextTokens}/${MAX_TOKENS}, needsCondensation: ${needsCondensation}, hasExistingSummary: ${!!conversationSummary}`)
+    
+    // Trigger condensation when over token limit (works for both first time and ongoing)
+    if (needsCondensation && conversationMessages.length > 4) {
+      console.log('[DEBUG] Context over limit - condensing...')
+      
+      // Always keep the most recent messages, summarize the rest
+      const keepRecentCount = Math.min(MAX_RECENT_MESSAGES, conversationMessages.length - 2)
+      const messagesToKeep = conversationMessages.slice(-keepRecentCount)
+      const messagesToSummarize = conversationMessages.slice(0, -keepRecentCount)
+      
+      console.log(`[DEBUG] Keeping ${keepRecentCount} recent messages, summarizing ${messagesToSummarize.length} older messages`)
+      
+      // CRITICAL: Update UI state BEFORE summarization to immediately reflect fewer messages
+      const searchMessages = messages.filter(msg => msg.role === 'search')
+      const keepUIMessages = messagesToKeep.map(msg => {
+        return messages.find(uiMsg => uiMsg.content === msg.content && uiMsg.role === msg.role) || 
+               { ...msg, id: Date.now() + Math.random() }
+      })
+      setMessages([...searchMessages, ...keepUIMessages])
+      
+      // Create or update summary (happens after UI update)
+      const newSummary = await summarizeConversation(messagesToSummarize)
+      setConversationSummary(newSummary)
+      
+      console.log('[DEBUG] Context condensation completed')
+      
+      return [
+        { role: 'system', content: `Previous conversation context: ${newSummary}` },
+        ...messagesToKeep
+      ]
+    }
+    
+    // If we have a summary, include it as system context
+    if (conversationSummary) {
+      return [
+        { role: 'system', content: `Previous conversation context: ${conversationSummary}` },
+        ...recentMessages
+      ]
+    }
+    
+    return recentMessages
+  }
+
+  // Calculate context info for the visual indicator  
+  const getContextInfo = () => {
+    const conversationMessages = messages.filter(msg => msg.role !== 'search')
+    const MAX_TOKENS = 4000
+    const estimateTokens = (text) => Math.ceil(text.length / 4)
+    
+    // FIXED: Use same logic as buildConversationHistory for consistency
+    // This ensures the visual indicator matches the actual condensation trigger
+    const summaryTokens = conversationSummary ? estimateTokens(conversationSummary) : 0
+    const allMessageTokens = conversationMessages.reduce((total, msg) => 
+      total + estimateTokens(msg.content), 0)
+    const totalTokens = allMessageTokens + summaryTokens
+    
+    // Add debug logging to track context calculation
+    console.log(`[CONTEXT] Messages: ${conversationMessages.length}, MessageTokens: ${allMessageTokens}, SummaryTokens: ${summaryTokens}, Total: ${totalTokens}, ForceUpdate: ${forceContextUpdate}`)
+    
+    return {
+      tokensUsed: totalTokens,
+      maxTokens: MAX_TOKENS,
+      percentage: (totalTokens / MAX_TOKENS) * 100,
+      messageCount: conversationMessages.length,
+      isSummarizing: isSummarizing,
+      needsCondensing: totalTokens >= MAX_TOKENS,
+      hasBeenCondensed: !!conversationSummary
+    }
   }
 
 
@@ -162,12 +305,19 @@ function ChatContainer() {
     }, 800) // 800ms delay feels natural
 
     try {
+      // Build conversation history including the new user message
+      // This will automatically trigger condensation if needed
+      const conversationHistory = [
+        ...(await buildConversationHistory()),
+        { role: 'user', content: text }
+      ]
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'qwen3:latest',
-          messages: [{ role: 'user', content: text }]
+          messages: conversationHistory
         })
       })
 
@@ -256,7 +406,13 @@ function ChatContainer() {
         isLoading={isLoading && showThinking} 
         thinkingContent={thinkingContent}
       />
-      <MessageInput onSendMessage={sendMessage} onSearchMessage={searchMessage} isLoading={isLoading} />
+      <MessageInput 
+        onSendMessage={sendMessage} 
+        onSearchMessage={searchMessage} 
+        isLoading={isLoading}
+        contextInfo={getContextInfo()}
+        onClearConversation={clearConversation}
+      />
     </Container>
   )
 }

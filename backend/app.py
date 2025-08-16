@@ -20,7 +20,7 @@ async def root():
 # Allow the Vite dev server (http://localhost:5173) to talk to us
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "http://localhost:5174"],
     allow_methods=["POST"],
     allow_headers=["*"],
 )
@@ -229,6 +229,62 @@ Please provide a direct, helpful answer based on this information. If the search
         raise HTTPException(
             status_code=500,
             detail=f"Search and chat failed: {str(e)}"
+        )
+
+@app.post("/summarize")
+async def summarize_conversation(request: Request):
+    """
+    Summarize a conversation to compress context while preserving key information
+    """
+    body = await request.json()
+    messages = body.get("messages", [])
+    model = body.get("model", "qwen3:latest")
+    
+    if not messages:
+        raise HTTPException(status_code=400, detail="Messages array is required")
+    
+    try:
+        # Create conversation text from messages
+        conversation_text = ""
+        for msg in messages:
+            role = "User" if msg["role"] == "user" else "Assistant"
+            conversation_text += f"{role}: {msg['content']}\n\n"
+        
+        # Create summarization prompt focused on essential context only
+        summary_prompt = f"""Write a very brief context note (maximum 50 words) with only essential information:
+
+Conversation:
+{conversation_text}
+
+Essential context (name, current topic, key facts only):"""
+
+        # Send to LLM for summarization
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                OLLAMA_URL,
+                json={
+                    "model": model,
+                    "messages": [{"role": "user", "content": summary_prompt}],
+                    "stream": False
+                },
+                timeout=60.0
+            )
+            response.raise_for_status()
+            
+            summary_response = response.json()
+            summary = summary_response.get("message", {}).get("content", "").strip()
+            
+            return {
+                "summary": summary,
+                "original_message_count": len(messages),
+                "success": True
+            }
+            
+    except Exception as e:
+        print(f"[DEBUG] Error in conversation summarization: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Summarization failed: {str(e)}"
         )
 
 @app.post("/search-enhanced")

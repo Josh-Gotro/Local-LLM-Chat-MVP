@@ -10,6 +10,91 @@ const Form = styled.form`
   }
 `
 
+const ContextFooter = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 0.5rem;
+  padding: 0.25rem 0;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.4);
+  opacity: 0.7;
+  gap: 1rem;
+
+  @media (max-width: 768px) {
+    gap: 0.75rem;
+  }
+`
+
+const ContextInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+`
+
+const SummarizingIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.6rem;
+  color: rgba(255, 167, 38, 0.9);
+  font-weight: 500;
+  
+  &::before {
+    content: '⚡';
+    animation: pulse 1.5s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+`
+
+const ContextBar = styled.div`
+  width: 60px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+`
+
+const ContextFill = styled.div`
+  height: 100%;
+  background: ${props => {
+    if (props.$isSummarizing) return 'linear-gradient(90deg, rgba(255, 167, 38, 0.9), rgba(255, 107, 107, 0.9))';
+    if (props.$percentage >= 100) return 'rgba(255, 107, 107, 0.8)';
+    if (props.$percentage >= 70) return 'rgba(255, 167, 38, 0.8)';
+    return 'rgba(78, 205, 196, 0.8)';
+  }};
+  width: ${props => Math.min(props.$percentage, 100)}%;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+  animation: ${props => props.$isSummarizing ? 'summarizing 1.5s infinite alternate' : 'none'};
+  
+  @keyframes summarizing {
+    0% { opacity: 0.6; }
+    100% { opacity: 1; }
+  }
+`
+
+const ClearButton = styled.button`
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  font-size: 0.65rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.05);
+  }
+`
+
 const InputContainer = styled.div`
   display: flex;
   gap: 0.75rem;
@@ -202,7 +287,7 @@ const SearchButton = styled.button`
   }
 `
 
-function MessageInput({ onSendMessage, onSearchMessage, isLoading }) {
+function MessageInput({ onSendMessage, onSearchMessage, isLoading, contextInfo, onClearConversation }) {
   const [input, setInput] = useState('')
 
   const handleSubmit = (e) => {
@@ -255,6 +340,41 @@ function MessageInput({ onSendMessage, onSearchMessage, isLoading }) {
           </SendButton>
         </ButtonContainer>
       </InputContainer>
+      {contextInfo && (
+        <ContextFooter>
+          <ContextInfo>
+            {contextInfo.isSummarizing ? (
+              <SummarizingIndicator>Condensing context...</SummarizingIndicator>
+            ) : (
+              <>
+                <span>
+                  {contextInfo.hasBeenCondensed ? 'Active' : 'Context'}: {Math.round(contextInfo.percentage)}%
+                </span>
+                <ContextBar>
+                  <ContextFill 
+                    $percentage={contextInfo.percentage} 
+                    $isSummarizing={contextInfo.isSummarizing}
+                  />
+                </ContextBar>
+                <span>{contextInfo.tokensUsed}/{contextInfo.maxTokens}</span>
+                {contextInfo.hasBeenCondensed && (
+                  <span style={{ color: 'rgba(78, 205, 196, 0.8)', fontSize: '0.6rem' }}>
+                    ✓ Condensed
+                  </span>
+                )}
+                {!contextInfo.hasBeenCondensed && contextInfo.percentage >= 100 && (
+                  <span style={{ color: 'rgba(255, 167, 38, 0.9)', fontSize: '0.6rem' }}>
+                    Will condense after next response
+                  </span>
+                )}
+              </>
+            )}
+          </ContextInfo>
+          <ClearButton onClick={onClearConversation}>
+            Clear Chat
+          </ClearButton>
+        </ContextFooter>
+      )}
     </Form>
   )
 }
