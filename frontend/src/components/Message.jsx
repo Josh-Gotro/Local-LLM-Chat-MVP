@@ -1,4 +1,6 @@
 import styled from 'styled-components'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 const MessageContainer = styled.div`
   margin-bottom: 1.5rem;
@@ -71,6 +73,96 @@ const MessageRole = styled.span`
 const MessageContent = styled.div`
   white-space: pre-wrap;
   line-height: 1.6;
+
+  /* Markdown styling */
+  h1, h2, h3, h4, h5, h6 {
+    margin: 0.5rem 0;
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.3rem; }
+  h3 { font-size: 1.1rem; }
+
+  p {
+    margin: 0.5rem 0;
+  }
+
+  code {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+  }
+
+  pre {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin: 0.5rem 0;
+    overflow-x: auto;
+    border-left: 3px solid rgba(255, 255, 255, 0.3);
+  }
+
+  pre code {
+    background: none;
+    padding: 0;
+  }
+
+  ul, ol {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+  }
+
+  li {
+    margin: 0.25rem 0;
+  }
+
+  blockquote {
+    border-left: 3px solid rgba(255, 255, 255, 0.3);
+    padding-left: 0.75rem;
+    margin: 0.5rem 0;
+    font-style: italic;
+    opacity: 0.9;
+  }
+
+  strong {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.98);
+  }
+
+  em {
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  a {
+    color: #bb86fc;
+    text-decoration: none;
+    
+    &:hover {
+      text-decoration: underline;
+      color: #d1a3ff;
+    }
+  }
+
+  table {
+    border-collapse: collapse;
+    margin: 0.5rem 0;
+    width: 100%;
+  }
+
+  th, td {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.5rem;
+    text-align: left;
+  }
+
+  th {
+    background: rgba(255, 255, 255, 0.1);
+    font-weight: 600;
+  }
 `
 
 function Message({ role, content }) {
@@ -93,7 +185,11 @@ function Message({ role, content }) {
         <MessageRole>{getMessageLabel()}</MessageRole>
       </MessageHeader>
       <MessageContent>
-        {content}
+        {role === 'assistant' ? (
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+        ) : (
+          content
+        )}
       </MessageContent>
     </MessageContainer>
   )

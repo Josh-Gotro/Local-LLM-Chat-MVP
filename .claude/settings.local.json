@@ -14,7 +14,8 @@
       "Bash(python:*)",
       "Bash(taskkill:*)",
       "Bash(find:*)",
-      "Bash(npm run vite:*)"
+      "Bash(npm run vite:*)",
+      "Bash(npm install:*)"
     ],
     "deny": []
   }

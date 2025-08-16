@@ -1,185 +1,230 @@
-# CHAT – A Local LLM Proxy & Front‑end
+# Local LLM Chat MVP
 
-**Chat** is a tiny, self‑contained project that lets you run a lightweight chat 
-UI on your machine while using the *Ollama* LLM engine (or any other 
-locally‑hosted LLM that exposes a REST API).  
-The app is split into two parts:
+**Local LLM Chat MVP** is a lightweight chat application that serves as a proxy between a modern React frontend and the Ollama LLM engine. The app features both regular chat and intelligent web search capabilities, powered by LLM-based result filtering.
 
-| Part | What it is | Communication |
-|------|------------|--------------|
-| **Backend** | A `FastAPI` server that:<br>• Receives `POST /chat` requests<br>• Forwards to Ollama server (`/api/chat`)<br>• Returns response unchanged | Uses CORS middleware to allow frontend calls from `localhost:5173` |
-| **Frontend** | A Vite-powered React SPA that:<br>• Lets users send chat messages<br>• Displays AI replies | Calls backend's `/chat` endpoint at `http://localhost:8000/chat` |
+## 🏗️ Architecture
 
-> **Why use this?**  
-> Ollama’s REST endpoint can be used from any language, but you might want a 
-thin, type‑safe wrapper that handles CORS, logs traffic, or adds any future 
-middle‑man logic. This repo gives you that in a single‑repo solution that is 
-trivial to spin up.
+The application follows a simple proxy pattern with enhanced search capabilities:
+
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Backend** | FastAPI + Python | • Proxies chat requests to Ollama<br>• Provides intelligent web search with LLM filtering<br>• Handles streaming responses | 
+| **Frontend** | Vite + React + Styled Components | • Modern chat interface<br>• Real-time streaming with thinking bubbles<br>• Dual input modes: Chat and Search |
+
+### Communication Flow
+1. **Frontend** (localhost:5173) sends requests to **Backend** (localhost:8000)
+2. **Backend** forwards chat requests to **Ollama** (localhost:11434) 
+3. **Search requests** trigger web search + LLM analysis for result filtering
+4. Responses stream back through the proxy unchanged
 
 ---
 
 ## 📦 Project Structure
 
 ```
-LOCAL-LLM-CHAT-MVP/                  ← root
-├─ backend/            ← FastAPI (Python 3.8+)
-│  ├─ app.py           ← API logic
-│  ├─ requirements.txt
-│  └─ venv/            ← (created on install)
-├─ frontend/           ← Vite + React (or your framework)
-│  ├─ src/
-│  ├─ index.html
-│  └─ package.json
-└─ README.md           ← this file
+Local-LLM-Chat-MVP/
+├── backend/                    ← FastAPI Python server
+│   ├── app.py                 ← Main API with chat & search endpoints
+│   ├── search_service.py      ← DuckDuckGo search integration
+│   ├── requirements.txt       ← Python dependencies
+│   └── venv/                  ← Virtual environment (created on install)
+├── frontend/                  ← Vite + React SPA
+│   ├── src/
+│   │   ├── components/        ← React components
+│   │   │   ├── ChatContainer.jsx    ← Main chat logic & state
+│   │   │   ├── MessageList.jsx      ← Message display & scrolling
+│   │   │   ├── MessageInput.jsx     ← Dual-button input (Send/Search)
+│   │   │   ├── Message.jsx          ← Individual message styling
+│   │   │   ├── SearchResults.jsx    ← Search results display
+│   │   │   └── ThinkingBubble.jsx   ← Live thinking visualization
+│   │   ├── main.js            ← React app entry point
+│   │   └── index.css          ← Global styles
+│   ├── index.html
+│   ├── vite.config.js         ← Vite config with API proxy
+│   └── package.json           ← Frontend dependencies & scripts
+├── CLAUDE.md                  ← Development instructions for Claude Code
+└── README.md                  ← This file
 ```
 
-> **Tip** – All Python code lives under `backend/`; all front‑end code lives 
-under `frontend/`.
+---
+
+## ✨ Features
+
+### 💬 **Chat Interface**
+- **Streaming responses** with real-time typing effect
+- **Thinking visualization** - see the LLM's reasoning process in `<think>` tags
+- **Responsive design** - mobile-friendly layout that adapts to screen size
+- **Modern UI** with styled-components and luxury theme
+
+### 🔍 **Intelligent Web Search**
+- **Dual input modes**: 
+  - 🦆🦆→ **Search button** (matte gold) - performs web search
+  - **Send button** (gradient) - regular chat
+- **LLM-powered result filtering** - automatically selects the 2 most relevant results
+- **Integrated display** - search results appear above AI response in proper order
+- **DuckDuckGo integration** with fallback search methods
+
+### 🧠 **Search Intelligence**
+1. **Fetches 4-6 results** from DuckDuckGo initially
+2. **LLM analysis** ranks results by relevance to user query
+3. **Smart selection** of top 2 most useful results
+4. **Graceful fallback** to first results if filtering fails
 
 ---
 
 ## ⚙️ Prerequisites
 
-| What | How to install |
-|------|----------------|
-| **Python 3.8+** | <https://www.python.org/downloads/> |
-| **Node.js** (>=16) | <https://nodejs.org/en/download/> |
-| **Ollama** (LLM engine) | <https://ollama.ai/> |
-| **An LLM model** you want to chat with (e.g. `gpt-oss-20b`, `phi3`, …) | 
-`ollama pull <model>` |
+| Requirement | Installation |
+|-------------|--------------|
+| **Python 3.8+** | https://www.python.org/downloads/ |
+| **Node.js 16+** | https://nodejs.org/en/download/ |
+| **Ollama** | https://ollama.ai/ |
+| **LLM Model** | `ollama pull qwen3:latest` (or your preferred model) |
 
-> **Note** – The proxy is configured to forward to `http://localhost:11434` by 
-default, which is the standard Ollama listening port.
+> **Note**: The app is configured for Ollama on `http://localhost:11434` by default.
 
 ---
 
-## Getting Started
+## 🚀 Quick Start
 
-> **All commands are run from the repository root (`CHAT/`).**
-
-### 1. Clone / Copy
-
+### 1. **Clone Repository**
 ```bash
-git clone https://github.com/your-username/CHAT.git   # or just copy the repo
-cd LOCAL-LLM-CHAT-MVP
+git clone <your-repo-url>
+cd Local-LLM-Chat-MVP
 ```
 
-### 2. Install the backend dependencies
-
+### 2. **Setup Backend**
 ```bash
 cd backend
-python -m venv venv          # create a virtual environment
-source venv/bin/activate     # on Windows: venv\Scripts\activate
+python -m venv venv
+# Windows:
+venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
+
 pip install -r requirements.txt
 ```
 
-> If you prefer **Docker**, the Dockerfile (not shown) can be built for the 
-backend.  
-> For simplicity this readme assumes local installs.
-
-### 3. Install the frontend dependencies
-
+### 3. **Setup Frontend** 
 ```bash
 cd frontend
 npm install
 ```
 
-### 4. Pull an LLM model (if you haven’t already)
-
+### 4. **Start Ollama**
 ```bash
-# Example: pull the GPT‑4‑mini model
-ollama pull gpt4o-mini
+ollama serve    # In separate terminal
+ollama pull qwen3:latest  # Or your preferred model
 ```
 
-> Run the Ollama daemon *before* starting the app:
+### 5. **Start Development Servers**
 
+**Option A - Concurrent (Recommended):**
 ```bash
-ollama serve            # in its own terminal window
+cd frontend
+npm run dev    # Starts both backend and frontend
 ```
 
-### 5. Configure the environment (optional)
+**Option B - Separate terminals:**
+```bash
+# Terminal 1 - Backend
+cd backend
+uvicorn app:app --reload
 
-If you need a custom Ollama URL, create a `.env` file in `backend/`:
-
+# Terminal 2 - Frontend  
+cd frontend
+npm run vite
 ```
+
+### 6. **Open Application**
+Navigate to `http://localhost:5173`
+
+---
+
+## 🎯 Usage
+
+### **Regular Chat**
+1. Type your message in the input field
+2. Click **Send** or press Enter
+3. Watch the AI respond with thinking process visible
+
+### **Web Search**
+1. Type your search query
+2. Click the **🦆🦆→** button 
+3. See search results appear first, followed by AI analysis
+
+### **Input Commands**
+- **Enter**: Send regular chat message
+- **Shift+Enter**: New line in input
+- **🦆🦆→ Button**: Trigger intelligent web search
+- **Send Button**: Regular LLM chat
+
+---
+
+## 🔧 API Endpoints
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| `POST` | `/chat` | **Regular chat** - forwards to Ollama with streaming |
+| `POST` | `/search` | **Intelligent search** - web search + LLM filtering + synthesis |
+| `GET` | `/` | Health check endpoint |
+
+### **Request Format**
+```json
+{
+  "model": "qwen3:latest",
+  "messages": [{"role": "user", "content": "Your message"}],
+  "query": "search terms",  // for search endpoint only
+  "max_results": 2          // for search endpoint only
+}
+```
+
+---
+
+## 🛠️ Development Notes
+
+### **Streaming Architecture**
+- **Enabled by default** for real-time responses
+- **Thinking tags** (`<think>`) are parsed and displayed separately
+- **Chunked processing** handles partial JSON gracefully
+
+### **Search Implementation**
+- **DuckDuckGo API** primary source with BeautifulSoup fallback
+- **LLM filtering** uses separate non-streaming request for ranking
+- **Result caching** and error handling built-in
+
+### **Environment Configuration**
+Create `backend/.env` for custom settings:
+```env
 OLLAMA_URL=http://localhost:11434/api/chat
 ```
 
-> If you leave the file out, the default is used.
-
-### 6. Start the servers
-
-#### a. **Backend** (FastAPI)
-
-```bash
-cd backend
-source venv/bin/activate      # activate the same venv as before
-uvicorn app:app --reload
-```
-
-You’ll see:
-
-```
-INFO:     Uvicorn running on http://127.0.0.1:8000
-```
-
-#### b. **Frontend** (Vite)
-
-```bash
-cd frontend
-npm run dev
-```
-
-Vite will output:
-
-```
- VITE vX.X.X  ready
- ➜  Local:   http://localhost:5173/
-```
-
-> If you want both to run together from the root, you can use the npm script 
-defined in `frontend/package.json`:
-
-```bash
-npm run dev          # runs both the Vite dev server and the FastAPI backend in 
-parallel
-```
-
-### 7. Test the chat UI
-
-Open your browser to `http://localhost:5173/`.  
-Type a message, hit **Send**, and you should see the response from the LLM 
-appear in the UI.
+### **CORS Configuration**  
+Backend allows `http://localhost:5173` by default. Add domains to `allow_origins` in `app.py` as needed.
 
 ---
 
-## 📄 API Reference
+## 🎨 Customization
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/chat` | Accepts a JSON body `{ model: "...", messages: 
-[{role:"user",content:"..."}, ...] }`. Forwards the request to Ollama and 
-streams back the full JSON response. |
+### **Styling**
+- **Styled-components** for component-scoped CSS
+- **Responsive breakpoints** at 768px and 1025px
+- **Color scheme** customizable via styled-component props
 
-> **CORS**: The backend allows `http://localhost:5173` (the Vite dev server). 
-If you host the front‑end elsewhere, add that domain to the `allow_origins` 
-list in `backend/app.py`.
+### **Models**
+Change the default model by updating:
+- `model: 'qwen3:latest'` in frontend components
+- Ensure model is pulled: `ollama pull <model-name>`
 
----
-
-## 🔧 Development Notes
-
-- **Streaming** was originally enabled; it was turned off in `app.py` for 
-simplicity.  
-- To re‑enable streaming, set `stream=True` in the `client.post()` call and 
-adjust the response parsing accordingly.
-- All code is intentionally minimal – feel free to extend the proxy with 
-authentication, logging, rate‑limiting, or any other middleware.
+### **Search Sources**
+Extend `search_service.py` to add additional search providers or modify ranking algorithms.
 
 ---
 
 ## 📜 License
 
-MIT – see `LICENSE` file.
+MIT License - see LICENSE file for details.
 
 ---
+
+**Built with ❤️ using FastAPI, React, and Ollama**
