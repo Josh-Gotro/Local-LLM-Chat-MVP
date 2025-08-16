@@ -5,9 +5,11 @@ const MessageContainer = styled.div`
   padding: 0.75rem;
   border-radius: 8px;
   word-wrap: break-word;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
 
   ${props => props.$role === 'user' && `
-    background-color: #2563eb;
+    border: 2px solid #b8860b;
     margin-left: 2rem;
     
     @media (max-width: 768px) {
@@ -15,13 +17,13 @@ const MessageContainer = styled.div`
     }
     
     @media (prefers-color-scheme: light) {
-      background-color: #3b82f6;
-      color: white;
+      border-color: #daa520;
+      color: rgba(255, 255, 255, 0.95);
     }
   `}
 
   ${props => props.$role === 'assistant' && `
-    background-color: #374151;
+    border: 2px solid #f5f5f5;
     margin-right: 2rem;
     
     @media (max-width: 768px) {
@@ -29,13 +31,14 @@ const MessageContainer = styled.div`
     }
     
     @media (prefers-color-scheme: light) {
-      background-color: #e5e7eb;
-      color: #374151;
+      border-color: #e8e8e8;
+      color: rgba(255, 255, 255, 0.95);
     }
   `}
 
   ${props => props.$role === 'error' && `
-    background-color: #dc2626;
+    border: 2px solid #dc2626;
+    background: rgba(220, 38, 38, 0.1);
     margin-right: 2rem;
     
     @media (max-width: 768px) {
@@ -43,8 +46,9 @@ const MessageContainer = styled.div`
     }
     
     @media (prefers-color-scheme: light) {
-      background-color: #ef4444;
-      color: white;
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+      color: rgba(255, 255, 255, 0.95);
     }
   `}
 

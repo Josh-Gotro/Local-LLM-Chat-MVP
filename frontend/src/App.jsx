@@ -69,16 +69,16 @@ const Title = styled.h1`
   text-align: center;
   margin: 1rem 0;
   font-size: 2rem;
-  background: linear-gradient(45deg, #ff4081, #bb86fc, #3282b8, #ffd700);
+  background: linear-gradient(45deg, #8b7355, #b8860b, #f5f5f5, #000000);
   background-size: 300% 300%;
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: synthwave-glow 8s ease-in-out infinite;
   text-shadow: 
-    0 0 10px rgba(255, 64, 129, 0.5),
-    0 0 20px rgba(187, 134, 252, 0.3),
-    0 0 30px rgba(50, 130, 184, 0.2);
+    0 0 10px rgba(139, 115, 85, 0.5),
+    0 0 20px rgba(184, 134, 11, 0.3),
+    0 0 30px rgba(245, 245, 245, 0.2);
   font-weight: 700;
   letter-spacing: 2px;
 
@@ -94,7 +94,7 @@ const Title = styled.h1`
   }
 
   @media (prefers-color-scheme: light) {
-    background: linear-gradient(45deg, #ff4081, #bb86fc, #3282b8, #ffd700);
+    background: linear-gradient(45deg, #8b7355, #b8860b, #f5f5f5, #000000);
     background-size: 300% 300%;
     background-clip: text;
     -webkit-background-clip: text;
@@ -112,14 +112,15 @@ const GlobalStyle = createGlobalStyle`
     padding: 0;
     min-height: 100vh;
     background: linear-gradient(135deg, 
-      #0a0a0a 0%, 
-      #1a0a2e 15%, 
-      #16213e 30%, 
-      #0f4c75 45%, 
-      #3282b8 60%, 
-      #bb86fc 75%, 
-      #ff4081 90%, 
-      #ffd700 100%
+      #000000 0%, 
+      #1a1a1a 15%, 
+      #2d2d2d 25%, 
+      #8b7355 40%, 
+      #b8860b 50%, 
+      #daa520 60%, 
+      #f5f5f5 75%, 
+      #e8e8e8 85%, 
+      #000000 100%
     ) !important;
     background-attachment: fixed !important;
   }

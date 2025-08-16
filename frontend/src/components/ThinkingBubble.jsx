@@ -16,9 +16,23 @@ const ThinkingContainer = styled.div`
   padding: 0.75rem;
   border-radius: 8px;
   word-wrap: break-word;
-  background-color: #374151;
+  background: transparent;
+  border: 2px dashed #b8860b;
   margin-right: 2rem;
-  opacity: 0.8;
+  opacity: 0.9;
+  color: rgba(255, 255, 255, 0.9);
+  animation: thinking-glow 2s ease-in-out infinite;
+
+  @keyframes thinking-glow {
+    0%, 100% { 
+      border-color: #b8860b;
+      box-shadow: 0 0 5px rgba(184, 134, 11, 0.3);
+    }
+    50% { 
+      border-color: #daa520;
+      box-shadow: 0 0 15px rgba(218, 165, 32, 0.5);
+    }
+  }
 
   @media (max-width: 768px) {
     margin-right: 1rem;
@@ -27,8 +41,19 @@ const ThinkingContainer = styled.div`
   }
 
   @media (prefers-color-scheme: light) {
-    background-color: #e5e7eb;
-    color: #374151;
+    border-color: #daa520;
+    color: rgba(255, 255, 255, 0.95);
+    
+    @keyframes thinking-glow {
+      0%, 100% { 
+        border-color: #daa520;
+        box-shadow: 0 0 5px rgba(218, 165, 32, 0.4);
+      }
+      50% { 
+        border-color: #b8860b;
+        box-shadow: 0 0 15px rgba(184, 134, 11, 0.6);
+      }
+    }
   }
 `
 

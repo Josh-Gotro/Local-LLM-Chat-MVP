@@ -16,23 +16,25 @@ const Container = styled.div`
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 4px 20px rgba(0, 0, 0, 0.3);
 
-  /* Custom scrollbar for synthwave theme */
+  /* Custom scrollbar for luxury theme */
   &::-webkit-scrollbar {
     width: 8px;
   }
 
   &::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.3);
     border-radius: 4px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: linear-gradient(45deg, #ff4081, #bb86fc);
+    background: linear-gradient(45deg, #8b7355, #b8860b, #daa520);
     border-radius: 4px;
+    border: 1px solid rgba(245, 245, 245, 0.1);
   }
 
   &::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(45deg, #ff6b9d, #d1a3ff);
+    background: linear-gradient(45deg, #a0845f, #d4af37, #f4d03f);
+    border-color: rgba(245, 245, 245, 0.2);
   }
 
   @media (max-width: 768px) {

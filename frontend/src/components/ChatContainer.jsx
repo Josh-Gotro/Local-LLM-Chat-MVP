@@ -24,6 +24,7 @@ function ChatContainer() {
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [thinkingContent, setThinkingContent] = useState('')
+  const [showThinking, setShowThinking] = useState(false)
 
   const addMessage = (role, content) => {
     setMessages(prev => [...prev, { role, content, id: Date.now() }])
@@ -36,6 +37,12 @@ function ChatContainer() {
     addMessage('user', text)
     setIsLoading(true)
     setThinkingContent('')
+    setShowThinking(false)
+
+    // Add a natural delay before showing thinking bubble
+    const thinkingDelay = setTimeout(() => {
+      setShowThinking(true)
+    }, 800) // 800ms delay feels natural
 
     try {
       const response = await fetch('/api/chat', {
@@ -99,8 +106,10 @@ function ChatContainer() {
             }
 
             if (data.done) {
+              clearTimeout(thinkingDelay)
               setIsLoading(false)
               setThinkingContent('')
+              setShowThinking(false)
               if (finalMessage) {
                 addMessage('assistant', finalMessage)
               } else {
@@ -115,9 +124,11 @@ function ChatContainer() {
         }
       }
     } catch (error) {
+      clearTimeout(thinkingDelay)
       addMessage('error', error.message)
       setIsLoading(false)
       setThinkingContent('')
+      setShowThinking(false)
     }
   }
 
@@ -125,7 +136,7 @@ function ChatContainer() {
     <Container>
       <MessageList 
         messages={messages} 
-        isLoading={isLoading} 
+        isLoading={isLoading && showThinking} 
         thinkingContent={thinkingContent}
       />
       <MessageInput onSendMessage={sendMessage} isLoading={isLoading} />
