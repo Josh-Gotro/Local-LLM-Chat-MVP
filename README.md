@@ -21,7 +21,7 @@ trivial to spin up.
 ## 📦 Project Structure
 
 ```
-CHAT/                  ← root
+LOCAL-LLM-CHAT-MVP/                  ← root
 ├─ backend/            ← FastAPI (Python 3.8+)
 │  ├─ app.py           ← API logic
 │  ├─ requirements.txt
@@ -61,15 +61,16 @@ default, which is the standard Ollama listening port.
 
 ```bash
 git clone https://github.com/your-username/CHAT.git   # or just copy the repo
-cd CHAT
+cd LOCAL-LLM-CHAT-MVP
 ```
 
 ### 2. Install the backend dependencies
 
 ```bash
+cd backend
 python -m venv venv          # create a virtual environment
 source venv/bin/activate     # on Windows: venv\Scripts\activate
-pip install -r backend/requirements.txt
+pip install -r requirements.txt
 ```
 
 > If you prefer **Docker**, the Dockerfile (not shown) can be built for the 

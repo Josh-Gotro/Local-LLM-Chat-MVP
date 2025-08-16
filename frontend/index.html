@@ -2,59 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Local LLM Demo</title>
-    <style>
-      body { font-family: Arial, sans-serif; margin: 2rem; }
-      #messages { white-space: pre-wrap; border: 1px solid #ccc; padding: 1rem; 
-min-height: 200px; }
-      #input { width: 80%; }
-    </style>
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Local LLM Chat</title>
   </head>
   <body>
-    <h1>Local LLM Demo (gpt-oss:20b)</h1>
-    <div id="messages"></div>
-    <br />
-    <input id="input" placeholder="Type your message…" />
-    <button id="send">Send</button>
-
-    <script type="module">
-      const messagesDiv = document.getElementById('messages');
-      const input = document.getElementById('input');
-      const sendBtn = document.getElementById('send');
-
-      const addMessage = (role, text) => {
-        messagesDiv.textContent += `${role.toUpperCase()}: ${text}\n`;
-      };
-
-      const send = async () => {
-        const text = input.value.trim();
-        if (!text) return;
-        input.value = '';
-        addMessage('user', text);
-
-        try {
-          const res = await fetch('/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              model: 'gpt-oss:20b',
-              messages: [{ role: 'user', content: text }],
-              stream: false
-            })
-          });
-
-          if (!res.ok) throw new Error(await res.text());
-          const data = await res.json();
-          const assistant = data.message?.content ?? '(no reply)';
-          addMessage('assistant', assistant);
-        } catch (err) {
-          addMessage('error', err.message);
-        }
-      };
-
-      sendBtn.addEventListener('click', send);
-      input.addEventListener('keydown', e => e.key === 'Enter' && send());
-    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
 
