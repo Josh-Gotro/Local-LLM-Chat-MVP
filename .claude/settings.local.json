@@ -4,7 +4,17 @@
       "Bash(mkdir:*)",
       "Bash(mv:*)",
       "Bash(rm:*)",
-      "Bash(npm install)"
+      "Bash(npm install)",
+      "Bash(pip install:*)",
+      "Bash(uvicorn:*)",
+      "Bash(python test:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(grep:*)",
+      "Bash(python:*)",
+      "Bash(taskkill:*)",
+      "Bash(find:*)",
+      "Bash(npm run vite:*)"
     ],
     "deny": []
   }

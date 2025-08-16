@@ -22,6 +22,18 @@ const InputContainer = styled.div`
   }
 `
 
+const ButtonContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: stretch;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    gap: 0.5rem;
+  }
+`
+
 const TextArea = styled.textarea`
   flex: 1;
   background: rgba(0, 0, 0, 0.3);
@@ -123,7 +135,7 @@ const SendButton = styled.button`
   }
 
   @media (max-width: 768px) {
-    width: 100%;
+    flex: 1;
   }
 
   @media (prefers-color-scheme: light) {
@@ -135,13 +147,76 @@ const SendButton = styled.button`
   }
 `
 
-function MessageInput({ onSendMessage, isLoading }) {
+const SearchButton = styled.button`
+  border-radius: 8px;
+  border: 1px solid rgba(184, 134, 11, 0.3);
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  background: #b8860b;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  height: fit-content;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  box-shadow: 
+    0 2px 8px rgba(184, 134, 11, 0.2);
+
+  &:hover:not(:disabled) {
+    background: #d4af37;
+    transform: translateY(-1px);
+    box-shadow: 
+      0 4px 12px rgba(184, 134, 11, 0.3);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    background: #a0751a;
+    box-shadow: 
+      0 1px 4px rgba(184, 134, 11, 0.2);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(100, 100, 100, 0.3);
+    transform: none;
+    box-shadow: none;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
+
+  @media (prefers-color-scheme: light) {
+    background: #b8860b;
+    
+    &:hover:not(:disabled) {
+      background: #d4af37;
+    }
+
+    &:active:not(:disabled) {
+      background: #a0751a;
+    }
+  }
+`
+
+function MessageInput({ onSendMessage, onSearchMessage, isLoading }) {
   const [input, setInput] = useState('')
 
   const handleSubmit = (e) => {
     e.preventDefault()
     if (input.trim() && !isLoading) {
       onSendMessage(input.trim())
+      setInput('')
+    }
+  }
+
+  const handleSearch = (e) => {
+    e.preventDefault()
+    if (input.trim() && !isLoading) {
+      onSearchMessage(input.trim())
       setInput('')
     }
   }
@@ -164,12 +239,21 @@ function MessageInput({ onSendMessage, isLoading }) {
           disabled={isLoading}
           rows="3"
         />
-        <SendButton 
-          type="submit" 
-          disabled={!input.trim() || isLoading}
-        >
-          {isLoading ? 'Sending...' : 'Send'}
-        </SendButton>
+        <ButtonContainer>
+          <SearchButton 
+            type="button"
+            onClick={handleSearch}
+            disabled={!input.trim() || isLoading}
+          >
+            🦆🦆→
+          </SearchButton>
+          <SendButton 
+            type="submit" 
+            disabled={!input.trim() || isLoading}
+          >
+            {isLoading ? 'Sending...' : 'Send'}
+          </SendButton>
+        </ButtonContainer>
       </InputContainer>
     </Form>
   )

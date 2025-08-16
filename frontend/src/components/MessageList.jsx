@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import styled from 'styled-components'
 import Message from './Message'
 import ThinkingBubble from './ThinkingBubble'
+import SearchResults from './SearchResults'
 
 const Container = styled.div`
   flex: 1;
@@ -84,15 +85,31 @@ function MessageList({ messages, isLoading, thinkingContent }) {
       {messages.length === 0 ? (
         <EmptyState>
           <p>Start a conversation with your local LLM!</p>
+          <p style={{ fontSize: '0.8em', marginTop: '0.5rem', opacity: 0.7 }}>
+            Tip: Use "/search your query" to search the web
+          </p>
         </EmptyState>
       ) : (
-        messages.map((message) => (
-          <Message 
-            key={message.id} 
-            role={message.role} 
-            content={message.content} 
-          />
-        ))
+        messages.map((message) => {
+          if (message.role === 'search') {
+            const searchData = JSON.parse(message.content)
+            return (
+              <SearchResults 
+                key={message.id}
+                query={searchData.query} 
+                results={searchData.results} 
+                count={searchData.count} 
+              />
+            )
+          }
+          return (
+            <Message 
+              key={message.id} 
+              role={message.role} 
+              content={message.content} 
+            />
+          )
+        })
       )}
       {isLoading && <ThinkingBubble thinkingContent={thinkingContent} />}
       <div ref={messagesEndRef} />
