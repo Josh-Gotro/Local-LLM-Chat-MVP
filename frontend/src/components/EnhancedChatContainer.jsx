@@ -378,7 +378,6 @@ function EnhancedChatContainer() {
         isLoading={isLoading}
         sessionId={sessionId}
         onClearConversation={clearConversation}
-        showContextTracker={false} // Use ContextVisualization instead
       />
 
       <ContextVisualization
