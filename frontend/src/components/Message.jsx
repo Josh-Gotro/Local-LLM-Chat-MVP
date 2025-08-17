@@ -72,12 +72,14 @@ const MessageRole = styled.span`
 
 const MessageContent = styled.div`
   white-space: pre-wrap;
-  line-height: 1.6;
+  line-height: 1.3;
 
-  /* Markdown styling */
+  /* Markdown styling - Aggressive compact display */
   h1, h2, h3, h4, h5, h6 {
-    margin: 0.5rem 0;
+    margin: 0;
+    margin-bottom: 0.05rem;
     color: rgba(255, 255, 255, 0.95);
+    line-height: 1.0;
   }
 
   h1 { font-size: 1.5rem; }
@@ -85,7 +87,34 @@ const MessageContent = styled.div`
   h3 { font-size: 1.1rem; }
 
   p {
-    margin: 0.5rem 0;
+    margin: 0;
+    margin-bottom: 0.1rem;
+    line-height: 1.3;
+  }
+
+  /* Remove default margins from react-markdown */
+  & > *:first-child {
+    margin-top: 0;
+  }
+  
+  & > *:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Clean spacing without !important */
+  h1 + ul,
+  h1 + ol,
+  h2 + ul,
+  h2 + ol,
+  h3 + ul,
+  h3 + ol,
+  h4 + ul,
+  h4 + ol,
+  h5 + ul,
+  h5 + ol,
+  h6 + ul,
+  h6 + ol {
+    margin-top: 0;
   }
 
   code {
@@ -98,11 +127,12 @@ const MessageContent = styled.div`
 
   pre {
     background: rgba(0, 0, 0, 0.3);
-    padding: 0.75rem;
+    padding: 0.5rem;
     border-radius: 6px;
-    margin: 0.5rem 0;
+    margin: 0.1rem 0;
     overflow-x: auto;
     border-left: 3px solid rgba(255, 255, 255, 0.3);
+    line-height: 1.2;
   }
 
   pre code {
@@ -111,20 +141,39 @@ const MessageContent = styled.div`
   }
 
   ul, ol {
-    margin: 0.5rem 0;
-    padding-left: 1.5rem;
+    margin: 0;
+    margin-bottom: 0.1rem;
+    padding-left: 1.2rem;
+    line-height: 1.3;
   }
 
   li {
-    margin: 0.25rem 0;
+    margin: 0;
+    padding: 0;
+    line-height: 1.3;
+    margin-bottom: -0.05rem;
+  }
+
+  /* Tighter spacing for nested lists */
+  li ul, li ol {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
+  /* Remove extra space from list items */
+  li p {
+    margin: 0;
+    line-height: 1.1;
   }
 
   blockquote {
     border-left: 3px solid rgba(255, 255, 255, 0.3);
     padding-left: 0.75rem;
-    margin: 0.5rem 0;
+    margin: 0;
+    margin-bottom: 0.1rem;
     font-style: italic;
     opacity: 0.9;
+    line-height: 1.3;
   }
 
   strong {
@@ -149,7 +198,8 @@ const MessageContent = styled.div`
 
   table {
     border-collapse: collapse;
-    margin: 0.5rem 0;
+    margin: 0;
+    margin-bottom: 0.1rem;
     width: 100%;
   }
 
