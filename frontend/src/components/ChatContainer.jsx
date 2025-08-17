@@ -84,9 +84,9 @@ function ChatContainer() {
           : msg.content
       }))
     
-    // More conservative context management focused on recent conversation
-    const MAX_RECENT_MESSAGES = 8
-    const MAX_TOKENS = 4000
+    // More reasonable context management with larger window
+    const MAX_RECENT_MESSAGES = 10  // Keep more recent messages
+    const MAX_TOKENS = 32000  // Much larger context window
     
     // Rough token estimation (very approximate: 1 token ≈ 4 characters)
     const estimateTokens = (text) => Math.ceil(text.length / 4)
@@ -106,11 +106,11 @@ function ChatContainer() {
     console.log(`[DEBUG] Tokens: ${totalContextTokens}/${MAX_TOKENS}, needsCondensation: ${needsCondensation}, hasExistingSummary: ${!!conversationSummary}`)
     
     // Trigger condensation when over token limit (works for both first time and ongoing)
-    if (needsCondensation && conversationMessages.length > 4) {
+    if (needsCondensation && conversationMessages.length > 15) {  // Allow more messages before condensing
       console.log('[DEBUG] Context over limit - condensing...')
       
-      // Always keep the most recent messages, summarize the rest
-      const keepRecentCount = Math.min(MAX_RECENT_MESSAGES, conversationMessages.length - 2)
+      // Keep more recent messages for better context continuity
+      const keepRecentCount = Math.min(MAX_RECENT_MESSAGES, Math.max(5, conversationMessages.length - 20))  // More reasonable
       const messagesToKeep = conversationMessages.slice(-keepRecentCount)
       const messagesToSummarize = conversationMessages.slice(0, -keepRecentCount)
       
@@ -136,6 +136,9 @@ function ChatContainer() {
       ]
     }
     
+    // For non-condensation case, still limit to recent messages for performance
+    const recentMessages = conversationMessages.slice(-MAX_RECENT_MESSAGES)
+    
     // If we have a summary, include it as system context
     if (conversationSummary) {
       return [
@@ -150,7 +153,7 @@ function ChatContainer() {
   // Calculate context info for the visual indicator  
   const getContextInfo = () => {
     const conversationMessages = messages.filter(msg => msg.role !== 'search')
-    const MAX_TOKENS = 4000
+    const MAX_TOKENS = 32000  // Match the new larger context window
     const estimateTokens = (text) => Math.ceil(text.length / 4)
     
     // FIXED: Use same logic as buildConversationHistory for consistency
@@ -412,6 +415,8 @@ function ChatContainer() {
         isLoading={isLoading}
         contextInfo={getContextInfo()}
         onClearConversation={clearConversation}
+        sessionId="default"
+        useEnhancedContext={false} // Keep legacy mode for backward compatibility
       />
     </Container>
   )

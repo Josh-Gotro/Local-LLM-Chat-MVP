@@ -1,5 +1,8 @@
+import { useState } from 'react'
 import styled, { createGlobalStyle } from 'styled-components'
 import ChatContainer from './components/ChatContainer'
+import EnhancedChatContainer from './components/EnhancedChatContainer'
+import ChatModeToggle from './components/ChatModeToggle'
 
 const AppContainer = styled.div`
   width: 100%;
@@ -157,12 +160,28 @@ const GlobalStyle = createGlobalStyle`
 `
 
 function App() {
+  const [isEnhancedMode, setIsEnhancedMode] = useState(true) // Default to enhanced mode
+
+  const handleModeToggle = () => {
+    setIsEnhancedMode(!isEnhancedMode)
+  }
+
   return (
     <>
       <GlobalStyle />
+      <ChatModeToggle 
+        isEnhanced={isEnhancedMode} 
+        onToggle={handleModeToggle} 
+      />
       <AppContainer>
-        <Title>Chat</Title>
-        <ChatContainer />
+        <Title>
+          Chat {isEnhancedMode && <span style={{ fontSize: '0.7em', opacity: 0.7 }}>🧠</span>}
+        </Title>
+        {isEnhancedMode ? (
+          <EnhancedChatContainer />
+        ) : (
+          <ChatContainer />
+        )}
       </AppContainer>
     </>
   )

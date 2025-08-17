@@ -6,11 +6,15 @@ from fastapi.responses import StreamingResponse
 import httpx
 from dotenv import load_dotenv
 from search_service import search_service
+from context_service import create_context_service
 
 load_dotenv()                       # load .env file
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434/api/chat")
 
 app = FastAPI(title="Local LLM Proxy")
+
+# Initialize context service
+context_service = create_context_service(OLLAMA_URL)
 
 @app.get("/")
 async def root():
@@ -21,7 +25,7 @@ async def root():
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://localhost:5174"],
-    allow_methods=["POST"],
+    allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["*"],
 )
 
@@ -350,4 +354,215 @@ async def enhanced_search(request: Request):
     except Exception as e:
         print(f"[ENHANCED] Exception: {e}")
         raise HTTPException(status_code=500, detail=f"Enhanced search failed: {str(e)}")
+
+# Enhanced Context Management Endpoints
+
+@app.post("/context/chat")
+async def enhanced_chat(request: Request):
+    """
+    Enhanced chat endpoint with intelligent context management
+    """
+    body = await request.json()
+    
+    # Validation
+    if "model" not in body or "messages" not in body:
+        raise HTTPException(status_code=400, detail="Missing required fields")
+    
+    model = body.get("model", "qwen3:latest")
+    messages = body.get("messages", [])
+    session_id = body.get("session_id", "default")
+    
+    try:
+        # Add user message to context
+        if messages and messages[-1]["role"] == "user":
+            user_message = messages[-1]["content"]
+            await context_service.add_message_to_context(session_id, "user", user_message, model)
+        
+        # Build optimized context
+        context_data = await context_service.build_conversation_context(
+            session_id, 
+            current_query=user_message if messages else "",
+            include_stats=True
+        )
+        
+        # Use enhanced context for LLM request
+        enhanced_body = {
+            "model": model,
+            "messages": context_data["messages"],
+            "stream": True
+        }
+        
+        async def stream_response():
+            assistant_content = ""
+            
+            async with httpx.AsyncClient() as client:
+                try:
+                    async with client.stream(
+                        "POST",
+                        OLLAMA_URL,
+                        json=enhanced_body,
+                        timeout=120.0,
+                    ) as resp:
+                        resp.raise_for_status()
+                        async for chunk in resp.aiter_text():
+                            if chunk:
+                                # Accumulate assistant response
+                                try:
+                                    data = json.loads(chunk)
+                                    if data.get("message", {}).get("content"):
+                                        assistant_content += data["message"]["content"]
+                                except:
+                                    pass
+                                
+                                yield chunk
+                                
+                        # Add assistant response to context after completion
+                        if assistant_content:
+                            await context_service.add_message_to_context(
+                                session_id, "assistant", assistant_content, model
+                            )
+                            
+                except httpx.HTTPError as exc:
+                    error_response = f'{{"error": "Error contacting Ollama: {exc}"}}\n'
+                    yield error_response
+
+        return StreamingResponse(
+            stream_response(),
+            media_type="text/plain",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+            }
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Enhanced chat failed: {str(e)}")
+
+@app.post("/context/add-message")
+async def add_message_to_context(request: Request):
+    """Add a message to conversation context"""
+    body = await request.json()
+    
+    session_id = body.get("session_id", "default")
+    role = body.get("role")
+    content = body.get("content")
+    model = body.get("model", "qwen3:latest")
+    
+    if not role or not content:
+        raise HTTPException(status_code=400, detail="Missing role or content")
+    
+    try:
+        result = await context_service.add_message_to_context(session_id, role, content, model)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to add message: {str(e)}")
+
+@app.get("/context/stats/{session_id}")
+async def get_context_stats(session_id: str):
+    """Get context statistics for a session"""
+    try:
+        stats = context_service.get_context_stats(session_id)
+        return stats
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get stats: {str(e)}")
+
+@app.post("/context/condense")
+async def force_context_condensation(request: Request):
+    """Force context condensation for a session"""
+    body = await request.json()
+    
+    session_id = body.get("session_id", "default")
+    model = body.get("model", "qwen3:latest")
+    
+    try:
+        result = await context_service.force_condensation(session_id, model)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Condensation failed: {str(e)}")
+
+@app.get("/context/memory/{session_id}")
+async def get_session_memory(session_id: str):
+    """Get session memory details"""
+    try:
+        memory = context_service.get_session_memory(session_id)
+        return memory
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get memory: {str(e)}")
+
+@app.post("/context/memory")
+async def update_session_memory(request: Request):
+    """Update session memory"""
+    body = await request.json()
+    
+    session_id = body.get("session_id", "default")
+    memory_updates = body.get("updates", {})
+    
+    try:
+        result = context_service.update_session_memory(session_id, memory_updates)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update memory: {str(e)}")
+
+@app.post("/context/search")
+async def semantic_search_context(request: Request):
+    """Search conversation context semantically"""
+    body = await request.json()
+    
+    session_id = body.get("session_id", "default")
+    query = body.get("query", "")
+    max_results = body.get("max_results", 5)
+    
+    if not query:
+        raise HTTPException(status_code=400, detail="Query is required")
+    
+    try:
+        results = await context_service.semantic_search_context(session_id, query, max_results)
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Context search failed: {str(e)}")
+
+@app.get("/context/history/{session_id}")
+async def get_conversation_history(session_id: str, limit: int = None):
+    """Get conversation history"""
+    try:
+        history = context_service.get_conversation_history(session_id, limit)
+        return history
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get history: {str(e)}")
+
+@app.delete("/context/{session_id}")
+async def clear_session_context(session_id: str):
+    """Clear session context"""
+    try:
+        result = context_service.clear_session(session_id)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to clear session: {str(e)}")
+
+@app.get("/context/sessions")
+async def get_all_sessions():
+    """Get information about all active sessions"""
+    try:
+        sessions = context_service.get_all_sessions()
+        return sessions
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get sessions: {str(e)}")
+
+@app.get("/context/hygiene/{session_id}")
+async def get_context_hygiene_report(session_id: str):
+    """Get context hygiene report for a session"""
+    try:
+        report = context_service.get_hygiene_report(session_id)
+        return report
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get hygiene report: {str(e)}")
+
+@app.get("/context/config")
+async def get_context_configuration():
+    """Get current context configuration settings"""
+    try:
+        config = context_service.get_context_config()
+        return config
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get config: {str(e)}")
 

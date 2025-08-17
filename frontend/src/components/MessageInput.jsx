@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import styled from 'styled-components'
+import ContextTracker from './ContextTracker'
+import SimpleContextTracker from './SimpleContextTracker'
 
 const Form = styled.form`
   border-top: 1px solid rgba(187, 134, 252, 0.3);
@@ -287,7 +289,15 @@ const SearchButton = styled.button`
   }
 `
 
-function MessageInput({ onSendMessage, onSearchMessage, isLoading, contextInfo, onClearConversation }) {
+function MessageInput({ 
+  onSendMessage, 
+  onSearchMessage, 
+  isLoading, 
+  contextInfo, 
+  onClearConversation,
+  sessionId = "default",
+  useEnhancedContext = false 
+}) {
   const [input, setInput] = useState('')
 
   const handleSubmit = (e) => {
@@ -340,40 +350,19 @@ function MessageInput({ onSendMessage, onSearchMessage, isLoading, contextInfo, 
           </SendButton>
         </ButtonContainer>
       </InputContainer>
-      {contextInfo && (
-        <ContextFooter>
-          <ContextInfo>
-            {contextInfo.isSummarizing ? (
-              <SummarizingIndicator>Condensing context...</SummarizingIndicator>
-            ) : (
-              <>
-                <span>
-                  {contextInfo.hasBeenCondensed ? 'Active' : 'Context'}: {Math.round(contextInfo.percentage)}%
-                </span>
-                <ContextBar>
-                  <ContextFill 
-                    $percentage={contextInfo.percentage} 
-                    $isSummarizing={contextInfo.isSummarizing}
-                  />
-                </ContextBar>
-                <span>{contextInfo.tokensUsed}/{contextInfo.maxTokens}</span>
-                {contextInfo.hasBeenCondensed && (
-                  <span style={{ color: 'rgba(78, 205, 196, 0.8)', fontSize: '0.6rem' }}>
-                    ✓ Condensed
-                  </span>
-                )}
-                {!contextInfo.hasBeenCondensed && contextInfo.percentage >= 100 && (
-                  <span style={{ color: 'rgba(255, 167, 38, 0.9)', fontSize: '0.6rem' }}>
-                    Will condense after next response
-                  </span>
-                )}
-              </>
-            )}
-          </ContextInfo>
-          <ClearButton onClick={onClearConversation}>
-            Clear Chat
-          </ClearButton>
-        </ContextFooter>
+      {useEnhancedContext ? (
+        <ContextTracker
+          sessionId={sessionId}
+          onClearConversation={onClearConversation}
+          isVisible={true}
+          isEnhanced={true}
+        />
+      ) : (
+        <SimpleContextTracker
+          contextInfo={contextInfo}
+          onClearConversation={onClearConversation}
+          isVisible={!!contextInfo}
+        />
       )}
     </Form>
   )
