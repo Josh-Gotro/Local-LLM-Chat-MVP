@@ -22,32 +22,6 @@ const Container = styled.div`
   }
 `
 
-const ContextToggle = styled.button`
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  background: rgba(187, 134, 252, 0.2);
-  border: 1px solid rgba(187, 134, 252, 0.4);
-  color: rgba(187, 134, 252, 0.9);
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-size: 0.8rem;
-  cursor: pointer;
-  z-index: 1000;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: rgba(187, 134, 252, 0.3);
-    border-color: rgba(187, 134, 252, 0.6);
-  }
-
-  @media (max-width: 768px) {
-    top: 0.5rem;
-    right: 0.5rem;
-    padding: 0.4rem 0.8rem;
-    font-size: 0.7rem;
-  }
-`
 
 function EnhancedChatContainer() {
   const [messages, setMessages] = useState([])
@@ -55,8 +29,6 @@ function EnhancedChatContainer() {
   const [thinkingContent, setThinkingContent] = useState('')
   const [showThinking, setShowThinking] = useState(false)
   const [sessionId] = useState("default") // In future, could be user-specific
-  const [showContextViz, setShowContextViz] = useState(true)  // Show compact view by default
-  const [showFullDashboard, setShowFullDashboard] = useState(false)
   const [contextStats, setContextStats] = useState(null)
 
   // Load conversation history on mount
@@ -394,19 +366,6 @@ function EnhancedChatContainer() {
 
   return (
     <Container>
-      <ContextToggle onClick={() => setShowFullDashboard(!showFullDashboard)}>
-        {showFullDashboard ? 'Hide' : 'Show'} Dashboard
-      </ContextToggle>
-
-      {showFullDashboard && (
-        <ContextVisualization
-          sessionId={sessionId}
-          onAction={handleContextAction}
-          isVisible={showFullDashboard}
-          defaultExpanded={true}
-        />
-      )}
-      
       <MessageList 
         messages={messages} 
         isLoading={isLoading && showThinking} 
@@ -422,14 +381,12 @@ function EnhancedChatContainer() {
         showContextTracker={false} // Use ContextVisualization instead
       />
 
-      {!showFullDashboard && (
-        <ContextVisualization
-          sessionId={sessionId}
-          onAction={handleContextAction}
-          isVisible={true}
-          defaultExpanded={false}
-        />
-      )}
+      <ContextVisualization
+        sessionId={sessionId}
+        onAction={handleContextAction}
+        isVisible={true}
+        defaultExpanded={false}
+      />
     </Container>
   )
 }

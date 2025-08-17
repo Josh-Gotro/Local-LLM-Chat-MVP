@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import styled, { createGlobalStyle } from 'styled-components'
-import ChatContainer from './components/ChatContainer'
 import EnhancedChatContainer from './components/EnhancedChatContainer'
-import ChatModeToggle from './components/ChatModeToggle'
 
 const AppContainer = styled.div`
   width: 100%;
@@ -79,9 +77,9 @@ const Title = styled.h1`
   -webkit-text-fill-color: transparent;
   animation: synthwave-glow 8s ease-in-out infinite;
   text-shadow: 
-    0 0 10px rgba(139, 115, 85, 0.5),
-    0 0 20px rgba(184, 134, 11, 0.3),
-    0 0 30px rgba(245, 245, 245, 0.2);
+    0 0 8px rgba(139, 115, 85, 0.2),
+    0 0 16px rgba(184, 134, 11, 0.1),
+    0 0 24px rgba(139, 115, 85, 0.05);
   font-weight: 700;
   letter-spacing: 2px;
 
@@ -160,28 +158,14 @@ const GlobalStyle = createGlobalStyle`
 `
 
 function App() {
-  const [isEnhancedMode, setIsEnhancedMode] = useState(true) // Default to enhanced mode
-
-  const handleModeToggle = () => {
-    setIsEnhancedMode(!isEnhancedMode)
-  }
-
   return (
     <>
       <GlobalStyle />
-      <ChatModeToggle 
-        isEnhanced={isEnhancedMode} 
-        onToggle={handleModeToggle} 
-      />
       <AppContainer>
         <Title>
-          Chat {isEnhancedMode && <span style={{ fontSize: '0.7em', opacity: 0.7 }}>🧠</span>}
+          Chat
         </Title>
-        {isEnhancedMode ? (
-          <EnhancedChatContainer />
-        ) : (
-          <ChatContainer />
-        )}
+        <EnhancedChatContainer />
       </AppContainer>
     </>
   )
