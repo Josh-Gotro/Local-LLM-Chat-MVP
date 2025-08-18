@@ -59,6 +59,15 @@ function EnhancedChatContainer() {
     return newMessage
   }
 
+  const updateLastMessage = (content) => {
+    setMessages(prev => {
+      if (prev.length === 0) return prev
+      const updated = [...prev]
+      updated[updated.length - 1] = { ...updated[updated.length - 1], content }
+      return updated
+    })
+  }
+
   const clearConversation = async () => {
     try {
       // Clear context on backend
@@ -128,6 +137,7 @@ function EnhancedChatContainer() {
       let finalMessage = ''
       let isInThinking = false
       let currentThinking = ''
+      let streamingMessageCreated = false
 
       while (true) {
         const { done, value } = await reader.read()
@@ -164,6 +174,19 @@ function EnhancedChatContainer() {
                 currentThinking += content.split('</think>')[0] || ''
                 setThinkingContent(currentThinking)
                 currentThinking = ''
+                
+                // Hide thinking bubble and start streaming response
+                setShowThinking(false)
+                setThinkingContent('')
+                
+                // Process any content after </think> in the same chunk
+                const afterThink = content.split('</think>')[1] || ''
+                if (afterThink) {
+                  finalMessage += afterThink
+                  // Create streaming message when thinking ends
+                  addMessage('assistant', finalMessage)
+                  streamingMessageCreated = true
+                }
               }
               else if (isInThinking) {
                 currentThinking += content
@@ -171,6 +194,14 @@ function EnhancedChatContainer() {
               }
               else if (!isInThinking && !content.includes('<think>')) {
                 finalMessage += content
+                
+                // Only start streaming after thinking is complete
+                if (!streamingMessageCreated) {
+                  addMessage('assistant', finalMessage)
+                  streamingMessageCreated = true
+                } else {
+                  updateLastMessage(finalMessage)
+                }
               }
             }
 
@@ -179,10 +210,18 @@ function EnhancedChatContainer() {
               setIsLoading(false)
               setThinkingContent('')
               setShowThinking(false)
+              
+              // If no streaming message was created, add a final message
+              if (!streamingMessageCreated) {
+                if (finalMessage) {
+                  addMessage('assistant', finalMessage)
+                } else {
+                  addMessage('assistant', '(no response)')
+                }
+              }
+              
+              // Add to context backend (use finalMessage regardless of streaming)
               if (finalMessage) {
-                addMessage('assistant', finalMessage)
-                
-                // Add to context backend
                 await fetch('/api/context/add-message', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -192,8 +231,6 @@ function EnhancedChatContainer() {
                     content: finalMessage
                   })
                 })
-              } else {
-                addMessage('assistant', '(no response)')
               }
               break
             }
@@ -253,6 +290,7 @@ function EnhancedChatContainer() {
       let finalMessage = ''
       let isInThinking = false
       let currentThinking = ''
+      let streamingMessageCreated = false
 
       while (true) {
         const { done, value } = await reader.read()
@@ -280,6 +318,19 @@ function EnhancedChatContainer() {
                 currentThinking += content.split('</think>')[0] || ''
                 setThinkingContent(currentThinking)
                 currentThinking = ''
+                
+                // Hide thinking bubble and start streaming response
+                setShowThinking(false)
+                setThinkingContent('')
+                
+                // Process any content after </think> in the same chunk
+                const afterThink = content.split('</think>')[1] || ''
+                if (afterThink) {
+                  finalMessage += afterThink
+                  // Create streaming message when thinking ends
+                  addMessage('assistant', finalMessage)
+                  streamingMessageCreated = true
+                }
               }
               else if (isInThinking) {
                 currentThinking += content
@@ -287,6 +338,14 @@ function EnhancedChatContainer() {
               }
               else if (!isInThinking && !content.includes('<think>')) {
                 finalMessage += content
+                
+                // Only start streaming after thinking is complete
+                if (!streamingMessageCreated) {
+                  addMessage('assistant', finalMessage)
+                  streamingMessageCreated = true
+                } else {
+                  updateLastMessage(finalMessage)
+                }
               }
             }
 
@@ -295,10 +354,14 @@ function EnhancedChatContainer() {
               setIsLoading(false)
               setThinkingContent('')
               setShowThinking(false)
-              if (finalMessage) {
-                addMessage('assistant', finalMessage)
-              } else {
-                addMessage('assistant', '(no response)')
+              
+              // If no streaming message was created, add a final message
+              if (!streamingMessageCreated) {
+                if (finalMessage) {
+                  addMessage('assistant', finalMessage)
+                } else {
+                  addMessage('assistant', '(no response)')
+                }
               }
               
               // Refresh context stats after conversation
